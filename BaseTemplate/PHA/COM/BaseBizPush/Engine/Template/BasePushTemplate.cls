@@ -29,6 +29,16 @@ Method Execute(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As PHA.COM
 #;                s target = $classmethod(cls,"%New")
                 set treg = reg.Targets.GetAt(j)
                 set target = $classmethod(treg.TargetClass, "%New")
+
+                // 人工模式下仅执行选中的 TargetClass
+                if (ctx.TriggerMode = "MANUAL") {
+                    if ('$isobject(ctx.AllowedTargetClasses)) {
+                        continue
+                    }
+                    if ($get(ctx.AllowedTargetClasses.(treg.TargetClass)) '= 1) {
+                        continue
+                    }
+                }
                 
                 // ★【新增】平台注册声明校验（只校验一次调用即可）
 			    set sc = ..ValidatePlatformRegistration(treg,target)

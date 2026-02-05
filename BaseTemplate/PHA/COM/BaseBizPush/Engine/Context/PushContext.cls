@@ -13,6 +13,9 @@ Property HospId As %String;
 /// 科室ID(department id)
 Property DeptCode As %String;
 
+/// 业务主信息（用于 Entry 重新取数）
+Property BizInfo As %DynamicObject;
+
 /// 业务数据(business data)
 Property BizData As %DynamicObject;
 
