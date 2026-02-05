@@ -54,7 +54,11 @@ Method Registrations() As %ListOfObjects
 /// 获取业务数据
 Method GetBizData(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As %DynamicObject
 {
-    Set refundId = ctx.BizInfo.refundId
+    // 优先使用 BizInfo 统一约定 data.id，兼容历史字段 refundId
+    Set refundId = ##class(PHA.COM.BaseBizPush.Engine.Context.BizInfoContext).GetId(ctx.BizInfo)
+    if refundId = "" {
+        Set refundId = $Get(ctx.BizInfo.refundId)
+    }
     Set data = ##class(PHA.FACE.TPS.SA.HIS2SA.Data.Herb).GetRefundData(refundId)
     Quit data
 }

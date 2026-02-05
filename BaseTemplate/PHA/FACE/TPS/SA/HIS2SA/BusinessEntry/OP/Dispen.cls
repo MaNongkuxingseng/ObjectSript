@@ -56,7 +56,11 @@ Method Registrations() As %ListOfObjects
 /// ctx.BizInfo.phd = 发药单号
 Method GetBizData(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As %DynamicObject
 {
-    Set phd = $Get(ctx.BizInfo.phd)
+    // 优先使用 BizInfo 统一约定 data.id，兼容历史字段 phd
+    Set phd = ##class(PHA.COM.BaseBizPush.Engine.Context.BizInfoContext).GetId(ctx.BizInfo)
+    if phd = "" {
+        Set phd = $Get(ctx.BizInfo.phd)
+    }
     Quit ##class(PHA.FACE.TPS.SA.HIS2SA.Data.OPDispen).GetPrescDispDetail(phd)
 }
 

@@ -65,7 +65,11 @@ Method Registrations() As %ListOfObjects
 Method GetBizData(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As %DynamicObject
 {
         Set data = {}
-        Set prescNo     = ctx.BizInfo.prescNo
+        // 优先使用 BizInfo 统一约定 data.no，兼容历史字段 prescNo
+        Set prescNo = ##class(PHA.COM.BaseBizPush.Engine.Context.BizInfoContext).GetNo(ctx.BizInfo)
+        if prescNo = "" {
+            Set prescNo = $Get(ctx.BizInfo.prescNo)
+        }
         
         s data = ##class(PHA.FACE.TPS.SA.HIS2SA.Data.Herb).GetPrescData(prescNo)
         Quit data

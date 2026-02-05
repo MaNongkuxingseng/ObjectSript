@@ -9,6 +9,7 @@ Method Execute(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As PHA.COM
         s regs = ..Registrations()
         s matched = 0
         s bizData = ..GetBizData(ctx)  // 提前获取业务数据用于过滤判断
+        d ctx.SetBizData(bizData)
 
         for i=1:1:regs.Count() {
             s reg = regs.GetAt(i)
@@ -29,6 +30,16 @@ Method Execute(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As PHA.COM
 #;                s target = $classmethod(cls,"%New")
                 set treg = reg.Targets.GetAt(j)
                 set target = $classmethod(treg.TargetClass, "%New")
+
+                // 人工模式下仅执行选中的 TargetClass
+                if (ctx.TriggerMode = "MANUAL") {
+                    if ('$isobject(ctx.AllowedTargetClasses)) {
+                        continue
+                    }
+                    if ($get(ctx.AllowedTargetClasses.(treg.TargetClass)) '= 1) {
+                        continue
+                    }
+                }
                 
                 // ★【新增】平台注册声明校验（只校验一次调用即可）
 			    set sc = ..ValidatePlatformRegistration(treg,target)
@@ -83,7 +94,7 @@ Method CheckFilter(target As PHA.COM.BaseBizPush.Engine.Target.ITarget, bizData 
     set r.ActionName = ..ActionName()
     set r.HospId = ctx.HospId
     set r.DeptCode = ctx.DeptCode
-    set r.BizMainInfo = ctx.BizInfo.%ToJSON()
+    set r.BizMainInfo = ctx.GetBizInfo().%ToJSON()
     
     set r.TargetCode = target.GetCode()
     set r.TargetName = target.GetName()
@@ -247,7 +258,7 @@ ClassMethod ExecuteAsync(targetClass As %String, platformCode As %String, platfo
 	    s ctx.TriggerCode = ctxObj.triggerCode
 	    s ctx.HospId      = ctxObj.hospId
 	    s ctx.DeptCode    = ctxObj.deptCode
-	    s ctx.BizInfo     = ctxObj.bizInfo
+	    d ctx.SetBizInfo(ctxObj.bizInfo)
 
 	    s target = $classmethod(targetClass, "%New")
 		// ---------- ★ 重新构造 PlatformInvokeContext ----------
@@ -330,7 +341,7 @@ Method ExecuteOneSync(target As PHA.COM.BaseBizPush.Engine.Target.ITarget, platf
         s r.ActionName = ..ActionName()
         s r.HospId = ctx.HospId
         s r.DeptCode = ctx.DeptCode
-        s r.BizMainInfo = ctx.BizInfo.%ToJSON()
+        s r.BizMainInfo = ctx.GetBizInfo().%ToJSON()
 
         s r.TargetCode = target.GetCode()
         s r.TargetName = target.GetName()
@@ -362,7 +373,7 @@ Method BuildNotRegisteredResult(ctx As PHA.COM.BaseBizPush.Engine.Context.PushCo
         s r.ActionName = ..ActionName()
         s r.HospId = ctx.HospId
         s r.DeptCode = ctx.DeptCode
-        s r.BizMainInfo = ctx.BizInfo.%ToJSON()
+        s r.BizMainInfo = ctx.GetBizInfo().%ToJSON()
         s r.Message = "推送接口未注册"
         q r
 }
