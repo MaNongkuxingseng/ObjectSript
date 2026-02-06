@@ -14,12 +14,10 @@ Method %OnNew() As %Status
 Method AddResult(r As PHA.COM.BaseBizPush.Engine.Result.PushResult)
 {
     d ..Results.Insert(r)
-    // 将单目标推送结果保持接口日志
-    s LogRowId=""
-    s param = r.ToFrontDTO().%ToJSON()
-    s user = ##class(PHA.COM.Err).GetSessionVal("LOGON.USERID","")
-    d ##class(PHA.FACE.COM.Log).Log(.LogRowId,"","OP","PHA.COM.BaseBizPush.Business.App.PushService","Push",,"",user,"")
-	s logret= ##class(PHA.FACE.COM.Log).Log(.LogRowId,param)
+
+    // 日志记录放在结果汇总入口，保证所有执行分支（成功/失败/异常）统一落日志
+    // 日志失败不阻断主流程
+    set logSc = ##class(PHA.COM.BaseBizPush.Engine.Result.PushResultLogService).Write(r)
 }
 
 Method GetAllResult() As %String
