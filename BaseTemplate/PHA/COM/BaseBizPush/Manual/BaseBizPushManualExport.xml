@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2016.2" ts="2026-02-05 10:15:13">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2016.2" ts="2026-02-06 00:59:41">
 <Class name="PHA.COM.BaseBizPush.Manual.DTO.PushBizInfoDTO">
 <UDLText><![CDATA[
 /// 人工重推业务主信息 DTO（收敛常见主键）
@@ -448,7 +448,7 @@ ClassMethod Execute(req As PHA.COM.BaseBizPush.Manual.DTO.PushExecuteRequestDTO)
     if $isobject(req.BizInfo) {
         set bizDyn = req.BizInfo.ToDynamicObject()
     }
-    do ctx.SetBizInfo(##class(PHA.COM.BaseBizPush.Engine.Context.BizInfoContext).Normalize(bizDyn))
+    do ctx.SetBizInfo(##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).NormalizeInfo(bizDyn))
     set ctx.TriggerMode = "MANUAL"
     set ctx.AllowedTargetClasses = ..BuildAllowedMap(req.TargetClasses)
 

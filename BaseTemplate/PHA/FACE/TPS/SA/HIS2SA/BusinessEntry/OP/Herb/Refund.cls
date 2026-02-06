@@ -55,9 +55,10 @@ Method Registrations() As %ListOfObjects
 Method GetBizData(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As %DynamicObject
 {
     // 优先使用 BizInfo 统一约定 data.id，兼容历史字段 refundId
-    Set refundId = ##class(PHA.COM.BaseBizPush.Engine.Context.BizInfoContext).GetId(ctx.BizInfo)
+    Set info = ctx.GetBizInfo()
+    Set refundId = ##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).GetId(info)
     if refundId = "" {
-        Set refundId = $Get(ctx.BizInfo.refundId)
+        Set refundId = $Get(info.refundId)
     }
     Set data = ##class(PHA.FACE.TPS.SA.HIS2SA.Data.Herb).GetRefundData(refundId)
     Quit data
@@ -71,9 +72,10 @@ ClassMethod TestRefundPush() As %String
     Set ctx.TriggerCode = "OP_HERB_REFUND"
     Set ctx.HospId = "SC001"
     Set ctx.DeptCode = "PHA1"
-    Set ctx.BizInfo = {}
-    Set ctx.BizInfo.refundId = "31"
-    Set ctx.BizInfo.prescNo = "O251202000004"
+    Set info = {}
+    Set info.refundId = "31"
+    Set info.prescNo = "O251202000004"
+    Do ctx.SetBizInfo(info)
     
     Set tpl = ##class(PHA.FACE.TPS.SA.HIS2SA.BusinessEntry.OP.Herb.Refund).%New()
     Set summary = tpl.Execute(ctx)

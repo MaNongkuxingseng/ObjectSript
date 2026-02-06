@@ -18,22 +18,73 @@ Method %OnNew() As %Status
 
 Method SetInfo(info As %DynamicObject)
 {
-    set ..Info = $case($isobject(info),1:info,:{})
+    set ..Info = ..EnsureObject(info)
 }
 
 Method SetData(data As %DynamicObject)
 {
-    set ..Data = $case($isobject(data),1:data,:{})
+    set ..Data = ..EnsureObject(data)
 }
 
 Method GetInfo() As %DynamicObject
 {
-    quit $case($isobject(..Info),1:..Info,:{})
+    quit ..EnsureObject(..Info)
 }
 
 Method GetData() As %DynamicObject
 {
-    quit $case($isobject(..Data),1:..Data,:{})
+    quit ..EnsureObject(..Data)
+}
+
+/// 归一化业务主信息：规范结构 data.id/data.no + 兼容历史字段
+ClassMethod NormalizeInfo(info As %DynamicObject) As %DynamicObject
+{
+    set o = ..EnsureObject(info)
+
+    if 'o.%IsDefined("data") || '$isobject(o.data) {
+        set o.data = {}
+    }
+    if 'o.%IsDefined("ext") || '$isobject(o.ext) {
+        set o.ext = {}
+    }
+
+    if '$data(o.data.id) || o.data.id="" {
+        set o.data.id = ..PickFirst(o, "id,rowId,phd,dspId,refundId,phdReturn")
+    }
+    if '$data(o.data.no) || o.data.no="" {
+        set o.data.no = ..PickFirst(o, "no,prescNo,billNo")
+    }
+
+    quit o
+}
+
+ClassMethod GetId(info As %DynamicObject) As %String
+{
+    set o = ..NormalizeInfo(info)
+    quit $get(o.data.id)
+}
+
+ClassMethod GetNo(info As %DynamicObject) As %String
+{
+    set o = ..NormalizeInfo(info)
+    quit $get(o.data.no)
+}
+
+ClassMethod PickFirst(obj As %DynamicObject, keys As %String) As %String
+{
+    for i=1:1:$length(keys,",") {
+        set key = $piece(keys,",",i)
+        continue:key=""
+        if obj.%IsDefined(key), obj.%Get(key)'="" {
+            quit obj.%Get(key)
+        }
+    }
+    quit ""
+}
+
+ClassMethod EnsureObject(o As %DynamicObject) As %DynamicObject
+{
+    quit $case($isobject(o),1:o,:{})
 }
 
 }

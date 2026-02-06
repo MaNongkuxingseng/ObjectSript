@@ -25,7 +25,8 @@ Method IsAsync() As %Boolean
 Method BuildPayload(bizData As %DynamicObject, ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As %Stream.TmpCharacter
 {
     Set arr = []
-    Set refundId = ctx.BizInfo.refundId
+    Set info = ctx.GetBizInfo()
+    Set refundId = $Get(info.refundId)
     
     Set bizData = ##class(PHA.FACE.TPS.SA.HIS2SA.Data.Herb).GetRefundData(refundId)
     Set dto = ##class(PHA.FACE.TPS.SA.HIS2SA.DTO.RefundBatchDTO).Build(bizData.data)

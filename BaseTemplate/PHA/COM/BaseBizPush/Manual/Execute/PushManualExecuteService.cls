@@ -33,7 +33,7 @@ ClassMethod Execute(req As PHA.COM.BaseBizPush.Manual.DTO.PushExecuteRequestDTO)
     if $isobject(req.BizInfo) {
         set bizDyn = req.BizInfo.ToDynamicObject()
     }
-    do ctx.SetBizInfo(##class(PHA.COM.BaseBizPush.Engine.Context.BizInfoContext).Normalize(bizDyn))
+    do ctx.SetBizInfo(##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).NormalizeInfo(bizDyn))
     set ctx.TriggerMode = "MANUAL"
     set ctx.AllowedTargetClasses = ..BuildAllowedMap(req.TargetClasses)
 

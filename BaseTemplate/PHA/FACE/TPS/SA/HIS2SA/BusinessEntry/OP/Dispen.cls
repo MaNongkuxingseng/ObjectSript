@@ -53,13 +53,14 @@ Method Registrations() As %ListOfObjects
 }
 
 /// 获取业务数据
-/// ctx.BizInfo.phd = 发药单号
+/// ctx.GetBizInfo().phd = 发药单号
 Method GetBizData(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As %DynamicObject
 {
     // 优先使用 BizInfo 统一约定 data.id，兼容历史字段 phd
-    Set phd = ##class(PHA.COM.BaseBizPush.Engine.Context.BizInfoContext).GetId(ctx.BizInfo)
+    Set info = ctx.GetBizInfo()
+    Set phd = ##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).GetId(info)
     if phd = "" {
-        Set phd = $Get(ctx.BizInfo.phd)
+        Set phd = $Get(info.phd)
     }
     Quit ##class(PHA.FACE.TPS.SA.HIS2SA.Data.OPDispen).GetPrescDispDetail(phd)
 }
@@ -72,8 +73,9 @@ ClassMethod TestBizPush()
     Set ctx.HospId      = "SC001"
     Set ctx.DeptCode    = "PHA1"
 
-    Set ctx.BizInfo = {}
-    Set ctx.BizInfo.phd = 281   // 发药单号
+    Set info = {}
+    Set info.phd = 281   // 发药单号
+    Do ctx.SetBizInfo(info)
 
     Set entry = ##class(PHA.FACE.TPS.SA.HIS2SA.BusinessEntry.OP.Dispen).%New()
     Set summary = entry.Execute(ctx)
