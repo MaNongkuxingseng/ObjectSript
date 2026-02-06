@@ -25,7 +25,7 @@ Method BuildPayload(bizData As %DynamicObject, ctx As PHA.COM.BaseBizPush.Engine
 {
 	Set arr = []
 	Set info = ctx.GetBizInfo()
-	Set prescNo = $Get(info.prescNo)
+	Set prescNo = ##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).Read(info, "prescNo", "")
 	/// 获取处方的批次发药数据
 	Set bizData = ##class(PHA.FACE.TPS.SA.HIS2SA.Data.Herb).GetPrescBatchData(prescNo)
 	Set dto = ##class(PHA.FACE.TPS.SA.HIS2SA.DTO.DispenseBatchDTO).Build(bizData.data)

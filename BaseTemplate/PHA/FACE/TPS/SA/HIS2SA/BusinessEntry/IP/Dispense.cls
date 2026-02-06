@@ -53,7 +53,7 @@ Method Registrations() As %ListOfObjects
 Method GetBizData(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As %DynamicObject
 {
     Set info = ctx.GetBizInfo()
-    Set dspId = $Get(info.dspId)
+    Set dspId = ##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).Read(info, "dspId", "")
     Quit ##class(PHA.FACE.TPS.SA.HIS2SA.Data.IPDispense).GetDispenseDetail(dspId)
 }
 

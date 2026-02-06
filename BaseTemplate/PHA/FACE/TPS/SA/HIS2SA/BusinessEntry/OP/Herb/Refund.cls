@@ -58,7 +58,7 @@ Method GetBizData(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As %Dyn
     Set info = ctx.GetBizInfo()
     Set refundId = ##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).GetId(info)
     if refundId = "" {
-        Set refundId = $Get(info.refundId)
+        Set refundId = ##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).Read(info, "refundId", "")
     }
     Set data = ##class(PHA.FACE.TPS.SA.HIS2SA.Data.Herb).GetRefundData(refundId)
     Quit data

@@ -69,7 +69,7 @@ Method GetBizData(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As %Dyn
         Set info = ctx.GetBizInfo()
         Set prescNo = ##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).GetNo(info)
         if prescNo = "" {
-            Set prescNo = $Get(info.prescNo)
+            Set prescNo = ##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).Read(info, "prescNo", "")
         }
         
         s data = ##class(PHA.FACE.TPS.SA.HIS2SA.Data.Herb).GetPrescData(prescNo)

@@ -48,7 +48,7 @@ Method Registrations() As %ListOfObjects
 Method GetBizData(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As %DynamicObject
 {
     Set info = ctx.GetBizInfo()
-    Set phdReturn = $Get(info.phdReturn)
+    Set phdReturn = ##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).Read(info, "phdReturn", "")
     Quit ##class(PHA.FACE.TPS.SA.HIS2SA.Data.OPReturn).GetPrescReturnDetail(phdReturn)
 }
 

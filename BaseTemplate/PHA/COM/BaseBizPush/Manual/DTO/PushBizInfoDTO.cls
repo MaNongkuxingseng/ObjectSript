@@ -72,20 +72,20 @@ ClassMethod FromDynamicObject(dyn As %DynamicObject) As PHA.COM.BaseBizPush.Manu
 
     // data 优先
     if dyn.%IsDefined("data") && $isobject(dyn.data) {
-        set dto.Id = $get(dyn.data.id)
-        set dto.No = $get(dyn.data.no)
+        set dto.Id = $select(dyn.data.%IsDefined("id"):dyn.data.%Get("id"),1:"")
+        set dto.No = $select(dyn.data.%IsDefined("no"):dyn.data.%Get("no"),1:"")
     }
 
     // 顶层回填
-    if dto.Id="" set dto.Id = $get(dyn.id)
-    if dto.No="" set dto.No = $get(dyn.no)
+    if dto.Id="" set dto.Id = $select(dyn.%IsDefined("id"):dyn.%Get("id"),1:"")
+    if dto.No="" set dto.No = $select(dyn.%IsDefined("no"):dyn.%Get("no"),1:"")
 
-    set dto.Phd = $get(dyn.phd)
-    set dto.RefundId = $get(dyn.refundId)
-    set dto.DspId = $get(dyn.dspId)
-    set dto.PhdReturn = $get(dyn.phdReturn)
-    set dto.PrescNo = $get(dyn.prescNo)
-    set dto.BillNo = $get(dyn.billNo)
+    set dto.Phd = $select(dyn.%IsDefined("phd"):dyn.%Get("phd"),1:"")
+    set dto.RefundId = $select(dyn.%IsDefined("refundId"):dyn.%Get("refundId"),1:"")
+    set dto.DspId = $select(dyn.%IsDefined("dspId"):dyn.%Get("dspId"),1:"")
+    set dto.PhdReturn = $select(dyn.%IsDefined("phdReturn"):dyn.%Get("phdReturn"),1:"")
+    set dto.PrescNo = $select(dyn.%IsDefined("prescNo"):dyn.%Get("prescNo"),1:"")
+    set dto.BillNo = $select(dyn.%IsDefined("billNo"):dyn.%Get("billNo"),1:"")
 
     if dyn.%IsDefined("ext") && $isobject(dyn.ext) {
         set dto.Ext = dyn.ext

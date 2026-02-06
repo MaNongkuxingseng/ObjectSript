@@ -60,7 +60,7 @@ Method GetBizData(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As %Dyn
     Set info = ctx.GetBizInfo()
     Set phd = ##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).GetId(info)
     if phd = "" {
-        Set phd = $Get(info.phd)
+        Set phd = ##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).Read(info, "phd", "")
     }
     Quit ##class(PHA.FACE.TPS.SA.HIS2SA.Data.OPDispen).GetPrescDispDetail(phd)
 }

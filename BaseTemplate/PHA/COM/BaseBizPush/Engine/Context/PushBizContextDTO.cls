@@ -48,12 +48,14 @@ ClassMethod NormalizeInfo(info As %DynamicObject) As %DynamicObject
         set o.ext = {}
     }
 
-    if '$data(o.data.id) || o.data.id="" {
-        set o.data.id = ..PickFirst(o, "id,rowId,phd,dspId,refundId,phdReturn")
+    set dataObj = ..EnsureObject($select(o.%IsDefined("data"):o.%Get("data"),1:{}))
+    if ..Read(dataObj, "id", "") = "" {
+        do dataObj.%Set("id", ..PickFirst(o, "id,rowId,phd,dspId,refundId,phdReturn"))
     }
-    if '$data(o.data.no) || o.data.no="" {
-        set o.data.no = ..PickFirst(o, "no,prescNo,billNo")
+    if ..Read(dataObj, "no", "") = "" {
+        do dataObj.%Set("no", ..PickFirst(o, "no,prescNo,billNo"))
     }
+    do o.%Set("data", dataObj)
 
     quit o
 }
@@ -61,13 +63,13 @@ ClassMethod NormalizeInfo(info As %DynamicObject) As %DynamicObject
 ClassMethod GetId(info As %DynamicObject) As %String
 {
     set o = ..NormalizeInfo(info)
-    quit $get(o.data.id)
+    quit ..Read(..EnsureObject($select(o.%IsDefined("data"):o.%Get("data"),1:{})), "id", "")
 }
 
 ClassMethod GetNo(info As %DynamicObject) As %String
 {
     set o = ..NormalizeInfo(info)
-    quit $get(o.data.no)
+    quit ..Read(..EnsureObject($select(o.%IsDefined("data"):o.%Get("data"),1:{})), "no", "")
 }
 
 ClassMethod PickFirst(obj As %DynamicObject, keys As %String) As %String
@@ -80,6 +82,14 @@ ClassMethod PickFirst(obj As %DynamicObject, keys As %String) As %String
         }
     }
     quit ""
+}
+
+
+ClassMethod Read(obj As %DynamicObject, key As %String, default As %String = "") As %String
+{
+    if '$isobject(obj) quit default
+    if 'obj.%IsDefined(key) quit default
+    quit obj.%Get(key)
 }
 
 ClassMethod EnsureObject(o As %DynamicObject) As %DynamicObject

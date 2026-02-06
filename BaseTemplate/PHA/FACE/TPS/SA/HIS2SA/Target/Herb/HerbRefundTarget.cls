@@ -26,7 +26,7 @@ Method BuildPayload(bizData As %DynamicObject, ctx As PHA.COM.BaseBizPush.Engine
 {
     Set arr = []
     Set info = ctx.GetBizInfo()
-    Set refundId = $Get(info.refundId)
+    Set refundId = ##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).Read(info, "refundId", "")
     
     Set bizData = ##class(PHA.FACE.TPS.SA.HIS2SA.Data.Herb).GetRefundData(refundId)
     Set dto = ##class(PHA.FACE.TPS.SA.HIS2SA.DTO.RefundBatchDTO).Build(bizData.data)

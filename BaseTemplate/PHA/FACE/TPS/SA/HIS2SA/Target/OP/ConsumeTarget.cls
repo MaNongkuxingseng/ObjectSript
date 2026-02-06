@@ -42,7 +42,7 @@ Method BuildPayloadByJSON(bizData As %DynamicObject, ctx As PHA.COM.BaseBizPush.
 {
     // 从上下文获取发药单号
     Set info = ctx.GetBizInfo()
-    Set phd = $Get(info.phd)
+    Set phd = ##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).Read(info, "phd", "")
     
     // 转换业务数据为平台需要的格式
     Set json = {}
