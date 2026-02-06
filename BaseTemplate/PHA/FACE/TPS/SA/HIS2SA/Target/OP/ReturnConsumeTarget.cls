@@ -44,7 +44,8 @@ Method BuildPayloadByJSON(bizData As %DynamicObject, ctx As PHA.COM.BaseBizPush.
     Set arr = []
     
     // 从上下文获取退药单号
-    Set phdReturn = $Get(ctx.BizInfo.phdReturn)
+    Set info = ctx.GetBizInfo()
+    Set phdReturn = $Get(info.phdReturn)
     
     // 如果bizData已经是正确格式，直接使用；否则重新获取
     If '$IsObject(bizData.data) {
@@ -408,8 +409,9 @@ ClassMethod TestBuildPayload(retId = "") As %String
     
     // 模拟上下文
     Set ctx = ##class(PHA.COM.BaseBizPush.Engine.Context.PushContext).%New()
-    Set ctx.BizInfo = {}
-    Set ctx.BizInfo.phdReturn = "101"
+    Set info = {}
+    Set info.phdReturn = "101"
+    Do ctx.SetBizInfo(info)
     
     // 构建Payload
     Set stream = target.BuildPayload(bizData, ctx)

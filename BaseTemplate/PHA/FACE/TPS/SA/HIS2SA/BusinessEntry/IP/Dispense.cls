@@ -52,7 +52,8 @@ Method Registrations() As %ListOfObjects
 /// 根据发药单号从数据层获取完整业务数据
 Method GetBizData(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As %DynamicObject
 {
-    Set dspId = $Get(ctx.BizInfo.dspId)
+    Set info = ctx.GetBizInfo()
+    Set dspId = $Get(info.dspId)
     Quit ##class(PHA.FACE.TPS.SA.HIS2SA.Data.IPDispense).GetDispenseDetail(dspId)
 }
 
@@ -66,8 +67,9 @@ ClassMethod TestBizPush()
     Set ctx.HospId      = "SC001"
     Set ctx.DeptCode    = "IPHA1"
 
-    Set ctx.BizInfo = {}
-    Set ctx.BizInfo.dspId = 201
+    Set info = {}
+    Set info.dspId = 201
+    Do ctx.SetBizInfo(info)
 
     Set entry = ##class(PHA.FACE.TPS.SA.HIS2SA.BusinessEntry.IP.Dispense).%New()
     Set summary = entry.Execute(ctx)

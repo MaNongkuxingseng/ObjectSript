@@ -41,7 +41,8 @@ Method BuildPayload(bizData As %DynamicObject, ctx As PHA.COM.BaseBizPush.Engine
 Method BuildPayloadByJSON(bizData As %DynamicObject, ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As %Stream.Object
 {
     // 从上下文获取发药单号
-    Set phd = $Get(ctx.BizInfo.phd)
+    Set info = ctx.GetBizInfo()
+    Set phd = $Get(info.phd)
     
     // 转换业务数据为平台需要的格式
     Set json = {}
@@ -278,8 +279,9 @@ ClassMethod TestBuildPayload() As %String
     Set bizData.data = ##class(PHA.FACE.TPS.SA.HIS2SA.Data.OPDispen).GetPrescDispDetail(281).data
     // 模拟上下文
     Set ctx = ##class(PHA.COM.BaseBizPush.Engine.Context.PushContext).%New()
-    Set ctx.BizInfo = {}
-    Set ctx.BizInfo.phd = "281"
+    Set info = {}
+    Set info.phd = "281"
+    Do ctx.SetBizInfo(info)
     
     // 构建Payload
     Set stream = target.BuildPayload(bizData, ctx)

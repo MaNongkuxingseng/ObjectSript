@@ -1,0 +1,581 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2016.2" ts="2026-02-06 00:59:41">
+<Class name="PHA.COM.BaseBizPush.Manual.DTO.PushBizInfoDTO">
+<UDLText><![CDATA[
+/// 人工重推业务主信息 DTO（收敛常见主键）
+/// Author: Valen MPF
+Class PHA.COM.BaseBizPush.Manual.DTO.PushBizInfoDTO Extends %SerialObject
+{
+
+/// 通用主键ID（推荐）
+Property Id As %String;
+
+/// 通用业务单号（推荐）
+Property No As %String;
+
+/// 历史兼容字段：发药单号
+Property Phd As %String;
+
+/// 历史兼容字段：退费单号
+Property RefundId As %String;
+
+/// 历史兼容字段：住院发药ID
+Property DspId As %String;
+
+/// 历史兼容字段：退药单号
+Property PhdReturn As %String;
+
+/// 历史兼容字段：处方号
+Property PrescNo As %String;
+
+/// 历史兼容字段：业务单号
+Property BillNo As %String;
+
+/// 扩展字段（受控扩展入口）
+Property Ext As %DynamicObject;
+
+Method %OnNew() As %Status
+{
+    if '$isobject(..Ext) {
+        set ..Ext = {}
+    }
+    quit $$$OK
+}
+
+/// 转为引擎可用 DynamicObject
+Method ToDynamicObject() As %DynamicObject
+{
+    set o = {
+        "data": {
+            "id": (..Id),
+            "no": (..No)
+        },
+        "id": (..Id),
+        "no": (..No),
+        "phd": (..Phd),
+        "refundId": (..RefundId),
+        "dspId": (..DspId),
+        "phdReturn": (..PhdReturn),
+        "prescNo": (..PrescNo),
+        "billNo": (..BillNo),
+        "ext": {}
+    }
+
+    if $isobject(..Ext) {
+        set o.ext = ..Ext
+    }
+
+    quit o
+}
+
+/// 由 DynamicObject 反序列化为 DTO
+ClassMethod FromDynamicObject(dyn As %DynamicObject) As PHA.COM.BaseBizPush.Manual.DTO.PushBizInfoDTO
+{
+    set dto = ..%New()
+    if '$isobject(dyn) quit dto
+
+    // data 优先
+    if dyn.%IsDefined("data") && $isobject(dyn.data) {
+        set dto.Id = $get(dyn.data.id)
+        set dto.No = $get(dyn.data.no)
+    }
+
+    // 顶层回填
+    if dto.Id="" set dto.Id = $get(dyn.id)
+    if dto.No="" set dto.No = $get(dyn.no)
+
+    set dto.Phd = $get(dyn.phd)
+    set dto.RefundId = $get(dyn.refundId)
+    set dto.DspId = $get(dyn.dspId)
+    set dto.PhdReturn = $get(dyn.phdReturn)
+    set dto.PrescNo = $get(dyn.prescNo)
+    set dto.BillNo = $get(dyn.billNo)
+
+    if dyn.%IsDefined("ext") && $isobject(dyn.ext) {
+        set dto.Ext = dyn.ext
+    }
+
+    quit dto
+}
+
+}
+]]></UDLText>
+</Class>
+<Class name="PHA.COM.BaseBizPush.Manual.DTO.PushTargetInfoDTO">
+<UDLText><![CDATA[
+/// 人工重推目标简要信息 DTO
+/// Author: Valen MPF
+Class PHA.COM.BaseBizPush.Manual.DTO.PushTargetInfoDTO Extends %SerialObject
+{
+
+/// 前端关键字（用于 hisui 可选项）
+Property Keyword As %String;
+
+/// Target 唯一标识（类名）
+Property TargetClass As %String;
+
+/// 展示名称
+Property DisplayName As %String;
+
+/// 转换为前端可用动态对象
+Method ToDynamicObject() As %Library.DynamicObject
+{
+    quit {
+        "keyword": (..Keyword),
+        "targetClass": (..TargetClass),
+        "displayName": (..DisplayName)
+    }
+}
+
+}
+]]></UDLText>
+</Class>
+<Class name="PHA.COM.BaseBizPush.Manual.DTO.PushTargetQueryResponseDTO">
+<UDLText><![CDATA[
+/// 人工重推目标查询响应 DTO
+/// Author: Valen MPF
+Class PHA.COM.BaseBizPush.Manual.DTO.PushTargetQueryResponseDTO Extends %SerialObject
+{
+
+/// 查询是否成功
+Property Success As %Boolean;
+
+/// 响应消息
+Property Message As %String;
+
+/// 可选目标列表
+Property Targets As %ListOfObjects;
+
+/// hisui 关键字列表（与 Targets 对齐）
+Property Keywords As %ListOfDataTypes;
+
+/// 数量
+Property Total As %Integer;
+
+/// 转换为前端可用动态对象
+Method ToDynamicObject() As %Library.DynamicObject
+{
+    set targets = []
+    if $isobject(..Targets) {
+        for i=1:1:..Targets.Count() {
+            set item = ..Targets.GetAt(i)
+            continue:'$isobject(item)
+            do targets.%Push(item.ToDynamicObject())
+        }
+    }
+
+    set keywords = []
+    if $isobject(..Keywords) {
+        for j=1:1:..Keywords.Count() {
+            do keywords.%Push(..Keywords.GetAt(j))
+        }
+    }
+
+    // 兜底：若 Keywords 未装载，则从 Targets 反推，保证前端可用
+    if keywords.%Size()=0 {
+        for k=0:1:targets.%Size()-1 {
+            set t = targets.%Get(k)
+            if t.%IsDefined("keyword") {
+                do keywords.%Push(t.keyword)
+            }
+        }
+    }
+
+    quit {
+        "success": (..Success),
+        "message": (..Message),
+        "total": (..Total),
+        "keywords": (keywords),
+        "targets": (targets)
+    }
+}
+
+}
+]]></UDLText>
+</Class>
+<Class name="PHA.COM.BaseBizPush.Manual.DTO.PushExecuteRequestDTO">
+<UDLText><![CDATA[
+/// 人工重推执行请求 DTO
+/// Author: Valen MPF
+Class PHA.COM.BaseBizPush.Manual.DTO.PushExecuteRequestDTO Extends %SerialObject
+{
+
+/// 入口编码（唯一执行单元）
+Property EntryCode As %String;
+
+/// 当前院区
+Property HospId As %String;
+
+/// 当前科室
+Property DeptCode As %String;
+
+/// 业务主信息（强约束 DTO，避免 DynamicObject 无序扩张）
+Property BizInfo As PHA.COM.BaseBizPush.Manual.DTO.PushBizInfoDTO;
+
+/// 选中的 TargetClass 列表
+Property TargetClasses As list Of %ListOfDataTypes;
+
+Method %OnNew() As %Status
+{
+    if '$isobject(..BizInfo) {
+        set ..BizInfo = ##class(PHA.COM.BaseBizPush.Manual.DTO.PushBizInfoDTO).%New()
+    }
+    quit $$$OK
+}
+
+/// 由动态对象反序列化请求
+ClassMethod FromDynamicObject(dyn As %DynamicObject) As PHA.COM.BaseBizPush.Manual.DTO.PushExecuteRequestDTO
+{
+    set req = ..%New()
+    if '$isobject(dyn) quit req
+
+    set req.EntryCode = $get(dyn.entryCode)
+    set req.HospId = $get(dyn.hospId)
+    set req.DeptCode = $get(dyn.deptCode)
+
+    if dyn.%IsDefined("bizInfo") && $isobject(dyn.bizInfo) {
+        set req.BizInfo = ##class(PHA.COM.BaseBizPush.Manual.DTO.PushBizInfoDTO).FromDynamicObject(dyn.bizInfo)
+    }
+
+    if dyn.%IsDefined("targetClasses") && $isobject(dyn.targetClasses) {
+        set list = ##class(%ListOfDataTypes).%New()
+        for i=0:1:dyn.targetClasses.%Size()-1 {
+            do list.Insert(dyn.targetClasses.%Get(i))
+        }
+        set req.TargetClasses = list
+    }
+
+    quit req
+}
+
+}
+]]></UDLText>
+</Class>
+<Class name="PHA.COM.BaseBizPush.Manual.DTO.PushExecuteResultItemDTO">
+<UDLText><![CDATA[
+/// 人工重推单目标结果 DTO
+/// Author: Valen MPF
+Class PHA.COM.BaseBizPush.Manual.DTO.PushExecuteResultItemDTO Extends %SerialObject
+{
+
+/// 前端关键字
+Property Keyword As %String;
+
+/// Target 唯一标识（类名）
+Property TargetClass As %String;
+
+/// 是否成功
+Property Success As %Boolean;
+
+/// 结果信息
+Property Message As %String;
+
+/// 转换为前端可用动态对象
+Method ToDynamicObject() As %Library.DynamicObject
+{
+    quit {
+        "keyword": (..Keyword),
+        "targetClass": (..TargetClass),
+        "success": (..Success),
+        "message": (..Message)
+    }
+}
+
+}
+]]></UDLText>
+</Class>
+<Class name="PHA.COM.BaseBizPush.Manual.DTO.PushExecuteResultDTO">
+<UDLText><![CDATA[
+/// 人工重推执行结果 DTO
+/// Author: Valen MPF
+Class PHA.COM.BaseBizPush.Manual.DTO.PushExecuteResultDTO Extends %SerialObject
+{
+
+/// 总体是否成功
+Property Success As %Boolean;
+
+/// 总体消息
+Property Message As %String;
+
+/// 成功数
+Property SuccessCount As %Integer;
+
+/// 失败数
+Property FailureCount As %Integer;
+
+/// 明细（一个 Target 一个结果）
+Property Items As list Of %ListOfObjects;
+
+/// 转换为前端可用动态对象
+Method ToDynamicObject() As %Library.DynamicObject
+{
+    set results = []
+    if $isobject(..Items) {
+        for i=1:1:..Items.Count() {
+            set item = ..Items.GetAt(i)
+            continue:'$isobject(item)
+            do results.%Push(item.ToDynamicObject())
+        }
+    }
+
+    quit {
+        "success": (..Success),
+        "message": (..Message),
+        "successCount": (..SuccessCount),
+        "failureCount": (..FailureCount),
+        "results": (results)
+    }
+}
+
+}
+]]></UDLText>
+</Class>
+<Class name="PHA.COM.BaseBizPush.Manual.Query.PushTargetQueryService">
+<UDLText><![CDATA[
+/// 人工重推目标查询服务
+/// Author: Valen MPF
+Class PHA.COM.BaseBizPush.Manual.Query.PushTargetQueryService Extends %RegisteredObject
+{
+
+/// 根据当前上下文查询可参与重推的 Target 列表
+/// 说明：Entry 是唯一执行单元，Target 仅用于前端选择参与项
+ClassMethod Query(entryCode As %String, hospId As %String, deptCode As %String) As PHA.COM.BaseBizPush.Manual.DTO.PushTargetQueryResponseDTO
+{
+    set resp = ##class(PHA.COM.BaseBizPush.Manual.DTO.PushTargetQueryResponseDTO).%New()
+    do ..InitResponse(resp)
+
+    if entryCode = "" {
+        set resp.Message = "entryCode不能为空"
+        quit resp
+    }
+
+    set entryClass = ##class(PHA.COM.BaseBizPush.Business.App.PushService).ResolveEntryClass(entryCode)
+    if entryClass = "" {
+        set resp.Message = "未找到业务入口["_entryCode_"]"
+        quit resp
+    }
+
+    set entry = $classmethod(entryClass, "%New")
+    set ctx = ##class(PHA.COM.BaseBizPush.Engine.Context.PushContext).%New()
+    set ctx.TriggerCode = entryCode
+    set ctx.HospId = hospId
+    set ctx.DeptCode = deptCode
+
+    set seen = {}
+    set regs = entry.Registrations()
+    for i=1:1:regs.Count() {
+        set reg = regs.GetAt(i)
+        continue:'##class(PHA.COM.BaseBizPush.Engine.Match.EntryMatcher).IsMatch(reg, ctx)
+
+        for j=1:1:reg.Targets.Count() {
+            set treg = reg.Targets.GetAt(j)
+            set cls = treg.TargetClass
+            continue:cls=""
+            continue:$get(seen.(cls))=1
+
+            set target = $classmethod(cls, "%New")
+            set item = ##class(PHA.COM.BaseBizPush.Manual.DTO.PushTargetInfoDTO).%New()
+            set item.TargetClass = cls
+            set item.DisplayName = target.GetName()
+            set item.Keyword = ..BuildKeyword(cls)
+
+            do resp.Targets.Insert(item)
+            do resp.Keywords.Insert(item.Keyword)
+            set seen.(cls)=1
+        }
+    }
+
+    set resp.Total = resp.Targets.Count()
+    set resp.Success = 1
+    set resp.Message = "ok"
+    quit resp
+}
+
+/// 初始化响应对象
+ClassMethod InitResponse(ByRef resp As PHA.COM.BaseBizPush.Manual.DTO.PushTargetQueryResponseDTO)
+{
+    set resp.Success = 0
+    set resp.Message = ""
+    set resp.Targets = ##class(%ListOfObjects).%New()
+    set resp.Keywords = ##class(%ListOfDataTypes).%New()
+    set resp.Total = 0
+}
+
+/// 生成前端关键字（hisui 可直接用）
+ClassMethod BuildKeyword(targetClass As %String) As %String
+{
+    // 约定：以类名作为唯一关键字，保证前后端一致映射
+    quit targetClass
+}
+
+}
+]]></UDLText>
+</Class>
+<Class name="PHA.COM.BaseBizPush.Manual.Execute.PushManualExecuteService">
+<UDLText><![CDATA[
+/// 人工重推执行服务
+/// Author: Valen MPF
+Class PHA.COM.BaseBizPush.Manual.Execute.PushManualExecuteService Extends %RegisteredObject
+{
+
+/// 执行指定 TargetClass 的人工重推
+/// 说明：
+/// 1) 只执行 Entry.Execute
+/// 2) Target 仅作为白名单参与 Entry 内部流程
+/// 3) 通过重建 PushContext + BizInfo 触发 Entry 内部重新取数
+ClassMethod Execute(req As PHA.COM.BaseBizPush.Manual.DTO.PushExecuteRequestDTO) As PHA.COM.BaseBizPush.Manual.DTO.PushExecuteResultDTO
+{
+    set resp = ##class(PHA.COM.BaseBizPush.Manual.DTO.PushExecuteResultDTO).%New()
+    do ..InitResponse(resp)
+
+    set msg = ..ValidateRequest(req)
+    if msg '= "" {
+        set resp.Message = msg
+        quit resp
+    }
+
+    set entryClass = ##class(PHA.COM.BaseBizPush.Business.App.PushService).ResolveEntryClass(req.EntryCode)
+    if entryClass = "" {
+        set resp.Message = "未找到业务入口["_req.EntryCode_"]"
+        quit resp
+    }
+
+    set ctx = ##class(PHA.COM.BaseBizPush.Engine.Context.PushContext).%New()
+    set ctx.TriggerCode = req.EntryCode
+    set ctx.HospId = req.HospId
+    set ctx.DeptCode = req.DeptCode
+    set bizDyn = {}
+    if $isobject(req.BizInfo) {
+        set bizDyn = req.BizInfo.ToDynamicObject()
+    }
+    do ctx.SetBizInfo(##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).NormalizeInfo(bizDyn))
+    set ctx.TriggerMode = "MANUAL"
+    set ctx.AllowedTargetClasses = ..BuildAllowedMap(req.TargetClasses)
+
+    set entry = $classmethod(entryClass, "%New")
+    set summary = entry.Execute(ctx)
+
+    do ..BuildItems(resp, summary, req.TargetClasses)
+    set resp.Success = (resp.FailureCount=0)
+    set resp.Message = $select(resp.Success: "ok", 1: "执行完成，存在失败项")
+    quit resp
+}
+
+ClassMethod InitResponse(ByRef resp As PHA.COM.BaseBizPush.Manual.DTO.PushExecuteResultDTO)
+{
+    set resp.Success = 0
+    set resp.Message = ""
+    set resp.SuccessCount = 0
+    set resp.FailureCount = 0
+    set resp.Items = ##class(%ListOfObjects).%New()
+}
+
+ClassMethod ValidateRequest(req As PHA.COM.BaseBizPush.Manual.DTO.PushExecuteRequestDTO) As %String
+{
+    if '$isobject(req) quit "请求不能为空"
+    if req.EntryCode = "" quit "entryCode不能为空"
+    if req.HospId = "" quit "hospId不能为空"
+    if req.DeptCode = "" quit "deptCode不能为空"
+    if '$isobject(req.TargetClasses) quit "targetClasses不能为空"
+    if req.TargetClasses.Count()=0 quit "targetClasses不能为空"
+    quit ""
+}
+
+ClassMethod BuildAllowedMap(targetClasses As %ListOfDataTypes) As %DynamicObject
+{
+    set map = {}
+    for i=1:1:targetClasses.Count() {
+        set cls = targetClasses.GetAt(i)
+        continue:cls=""
+        set map.(cls) = 1
+    }
+    quit map
+}
+
+/// 将引擎结果封装为前端最小可用结构（一个 Target 一个结果）
+ClassMethod BuildItems(ByRef resp As PHA.COM.BaseBizPush.Manual.DTO.PushExecuteResultDTO, summary As PHA.COM.BaseBizPush.Engine.Result.PushSummary, selected As %ListOfDataTypes)
+{
+    set seen = {}
+
+    for i=1:1:summary.Results.Count() {
+        set r = summary.Results.GetAt(i)
+        continue:r.TargetClass=""
+        continue:'..InList(selected, r.TargetClass)
+
+        set item = ##class(PHA.COM.BaseBizPush.Manual.DTO.PushExecuteResultItemDTO).%New()
+        set item.TargetClass = r.TargetClass
+        set item.Keyword = r.TargetClass
+        set item.Success = r.Success
+        set item.Message = r.Message
+
+        do resp.Items.Insert(item)
+        set seen.(r.TargetClass)=1
+
+        if item.Success {
+            set resp.SuccessCount = resp.SuccessCount + 1
+        } else {
+            set resp.FailureCount = resp.FailureCount + 1
+        }
+    }
+
+    // 对未返回结果的已选 Target 补充失败项，避免前端对不齐
+    for j=1:1:selected.Count() {
+        set cls = selected.GetAt(j)
+        continue:cls=""
+        continue:$get(seen.(cls))=1
+
+        set miss = ##class(PHA.COM.BaseBizPush.Manual.DTO.PushExecuteResultItemDTO).%New()
+        set miss.TargetClass = cls
+        set miss.Keyword = cls
+        set miss.Success = 0
+        set miss.Message = "未产生执行结果"
+        do resp.Items.Insert(miss)
+        set resp.FailureCount = resp.FailureCount + 1
+    }
+}
+
+ClassMethod InList(list As %ListOfDataTypes, value As %String) As %Boolean
+{
+    if '$isobject(list) quit 0
+    for i=1:1:list.Count() {
+        if list.GetAt(i)=value quit 1
+    }
+    quit 0
+}
+
+}
+]]></UDLText>
+</Class>
+<Class name="PHA.COM.BaseBizPush.Manual.Facade.PushManualFacade">
+<UDLText><![CDATA[
+/// 人工重推前端 Facade
+/// Author: Valen MPF
+Class PHA.COM.BaseBizPush.Manual.Facade.PushManualFacade Extends %RegisteredObject
+{
+
+/// 前端查询可用推送目标
+/// 入参最小化：entryCode + 当前上下文(hospId,deptCode)
+ClassMethod QueryTargets(entryCode As %String, hospId As %String, deptCode As %String) As %DynamicObject
+{
+    set resp = ##class(PHA.COM.BaseBizPush.Manual.Query.PushTargetQueryService).Query(entryCode, hospId, deptCode)
+    quit resp.ToDynamicObject()
+}
+
+/// 前端执行选中目标（强类型 DTO）
+ClassMethod Execute(req As PHA.COM.BaseBizPush.Manual.DTO.PushExecuteRequestDTO) As %DynamicObject
+{
+    set resp = ##class(PHA.COM.BaseBizPush.Manual.Execute.PushManualExecuteService).Execute(req)
+    quit resp.ToDynamicObject()
+}
+
+/// 前端执行选中目标（动态对象入参，内部反序列化）
+ClassMethod ExecuteByDynamic(reqDyn As %DynamicObject) As %DynamicObject
+{
+    set req = ##class(PHA.COM.BaseBizPush.Manual.DTO.PushExecuteRequestDTO).FromDynamicObject(reqDyn)
+    quit ..Execute(req)
+}
+
+}
+]]></UDLText>
+</Class>
+</Export>
