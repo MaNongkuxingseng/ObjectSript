@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Manual Push Retry</title>
+  <link rel="stylesheet" href="https://cdn.staticfile.org/jquery-easyui/1.10.20/themes/default/easyui.css" />
+  <link rel="stylesheet" href="https://cdn.staticfile.org/jquery-easyui/1.10.20/themes/icon.css" />
+  <script src="https://cdn.staticfile.org/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdn.staticfile.org/jquery-easyui/1.10.20/jquery.easyui.min.js"></script>
+  <script src="push-manual.js"></script>
+  <style>
+    body { padding: 12px; }
+    .row { margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <h3>人工重推（Manual Push Retry）</h3>
+
+  <div class="row">
+    <input id="entryCode" class="easyui-textbox" prompt="entryCode" style="width:220px" />
+    <input id="hospId" class="easyui-textbox" prompt="hospId" style="width:160px" />
+    <input id="deptCode" class="easyui-textbox" prompt="deptCode" style="width:160px" />
+    <a href="#" class="easyui-linkbutton" onclick="queryTargets()">查询目标 Query</a>
+  </div>
+
+  <table id="targetGrid" class="easyui-datagrid" style="width:100%;height:220px"
+         data-options="singleSelect:false,checkOnSelect:true,selectOnCheck:true,fitColumns:true">
+    <thead>
+      <tr>
+        <th data-options="field:'ck',checkbox:true"></th>
+        <th data-options="field:'displayName',width:180">名称</th>
+        <th data-options="field:'keyword',width:280">关键字</th>
+        <th data-options="field:'targetClass',width:320">TargetClass</th>
+      </tr>
+    </thead>
+  </table>
+
+  <div class="row" style="margin-top:10px;">
+    <input id="bizInfoJson" class="easyui-textbox" multiline="true" style="width:100%;height:90px"
+           prompt='{"id":"","no":"","phd":"281"}' />
+  </div>
+
+  <div class="row">
+    <a href="#" class="easyui-linkbutton" onclick="executePush()">执行重推 Execute</a>
+  </div>
+
+  <table id="resultGrid" class="easyui-datagrid" style="width:100%;height:220px"
+         data-options="fitColumns:true,singleSelect:true">
+    <thead>
+      <tr>
+        <th data-options="field:'targetClass',width:320">TargetClass</th>
+        <th data-options="field:'success',width:80">成功</th>
+        <th data-options="field:'message',width:420">消息</th>
+      </tr>
+    </thead>
+  </table>
+</body>
+</html>

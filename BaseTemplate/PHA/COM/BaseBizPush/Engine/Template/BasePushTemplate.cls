@@ -29,53 +29,59 @@ Method Execute(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As PHA.COM
 #;                s cls = reg.Targets.GetAt(j)
 #;                s target = $classmethod(cls,"%New")
                 set treg = reg.Targets.GetAt(j)
-                set target = $classmethod(treg.TargetClass, "%New")
 
-                // 人工模式下仅执行选中的 TargetClass
-                if (ctx.TriggerMode = "MANUAL") {
-                    if ('$isobject(ctx.AllowedTargetClasses)) {
-                        continue
+                try {
+                    set target = $classmethod(treg.TargetClass, "%New")
+
+                    // 人工模式下仅执行选中的 TargetClass
+                    if (ctx.TriggerMode = "MANUAL") {
+                        if ('$isobject(ctx.AllowedTargetClasses)) {
+                            continue
+                        }
+                        if ($get(ctx.AllowedTargetClasses.(treg.TargetClass)) '= 1) {
+                            continue
+                        }
                     }
-                    if ($get(ctx.AllowedTargetClasses.(treg.TargetClass)) '= 1) {
-                        continue
-                    }
+                    
+                    // ★【新增】平台注册声明校验（只校验一次调用即可）
+			        set sc = ..ValidatePlatformRegistration(treg,target)
+			        if $$$ISERR(sc) {
+			            // 注册错误直接记录为失败结果，不再执行
+			            set r = ##class(PHA.COM.BaseBizPush.Engine.Result.PushResult).%New()
+			            set r.Success = 0
+			            set r.ActionCode = ..ActionCode()
+			            set r.ActionName = ..ActionName()
+			            set r.Message = $SYSTEM.Status.GetErrorText(sc)
+			            d summary.AddResult(r)
+			            continue
+			        }
+	                
+                    
+                    // 新增：执行前置过滤判断
+                    s filterResult = ..CheckFilter(target, bizData, ctx, summary)
+                    if (filterResult = 0) continue  // 过滤掉了，跳过执行
+                    
+                    // 通过过滤，执行推送
+#;				    if (target.IsAsync()) {
+#;				        // 异步推送
+#;				        d ..ExecuteAsync(target, bizData, ctx, summary)
+#;				    } else {
+#;				        // 同步推送
+#;				        d ..ExecuteOne(target, bizData, ctx, summary)
+#;				    }
+
+				    // 新增与平台交互使用平台推送上下文
+				    // 构造平台上下文
+			        s pctx = ##class(PHA.COM.BaseBizPush.Engine.Platform.Context.PlatformInvokeContext).%New()
+			        s pctx.PlatformCode = treg.PlatformCode
+			        s pctx.PlatformClass = treg.PlatformClass
+			        s pctx.MethodName    = treg.MethodName
+			        s pctx.PlatformData = treg.PlatformData
+                    d ..ExecuteOne(target,pctx, bizData, ctx, summary)
+                } catch ex {
+                    d summary.AddResult(..BuildTargetExceptionResult(ctx, treg, ex))
+                    continue
                 }
-                
-                // ★【新增】平台注册声明校验（只校验一次调用即可）
-			    set sc = ..ValidatePlatformRegistration(treg,target)
-			    if $$$ISERR(sc) {
-			        // 注册错误直接记录为失败结果，不再执行
-			        set r = ##class(PHA.COM.BaseBizPush.Engine.Result.PushResult).%New()
-			        set r.Success = 0
-			        set r.ActionCode = ..ActionCode()
-			        set r.ActionName = ..ActionName()
-			        set r.Message = $SYSTEM.Status.GetErrorText(sc)
-			        d summary.AddResult(r)
-			        continue
-			    }
-	            
-                
-                // 新增：执行前置过滤判断
-                s filterResult = ..CheckFilter(target, bizData, ctx, summary)
-                if (filterResult = 0) continue  // 过滤掉了，跳过执行
-                
-                // 通过过滤，执行推送
-#;				if (target.IsAsync()) {
-#;				    // 异步推送
-#;				    d ..ExecuteAsync(target, bizData, ctx, summary)
-#;				} else {
-#;				    // 同步推送
-#;				    d ..ExecuteOne(target, bizData, ctx, summary)
-#;				}
-
-				// 新增与平台交互使用平台推送上下文
-				// 构造平台上下文
-			    s pctx = ##class(PHA.COM.BaseBizPush.Engine.Platform.Context.PlatformInvokeContext).%New()
-			    s pctx.PlatformCode = treg.PlatformCode
-			    s pctx.PlatformClass = treg.PlatformClass
-				s pctx.MethodName    = treg.MethodName
-			    s pctx.PlatformData = treg.PlatformData
-                d ..ExecuteOne(target,pctx, bizData, ctx, summary)
             }
         }
 
@@ -363,6 +369,24 @@ Method ExecuteOneSync(target As PHA.COM.BaseBizPush.Engine.Target.ITarget, platf
         }
 
         d summary.AddResult(r)
+}
+
+
+Method BuildTargetExceptionResult(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext, treg As PHA.COM.BaseBizPush.Engine.Template.TargetRegistration, ex As %Exception.AbstractException) As PHA.COM.BaseBizPush.Engine.Result.PushResult
+{
+    s r = ##class(PHA.COM.BaseBizPush.Engine.Result.PushResult).%New()
+    s r.Success = 0
+    s r.ActionCode = ..ActionCode()
+    s r.ActionName = ..ActionName()
+    s r.HospId = ctx.HospId
+    s r.DeptCode = ctx.DeptCode
+    s r.BizMainInfo = ctx.GetBizInfo().%ToJSON()
+
+    if $isobject(treg) {
+        s r.TargetClass = treg.TargetClass
+    }
+    s r.Message = "目标执行异常: " _ ex.DisplayString()
+    q r
 }
 
 Method BuildNotRegisteredResult(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As PHA.COM.BaseBizPush.Engine.Result.PushResult
