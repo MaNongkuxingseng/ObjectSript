@@ -47,7 +47,8 @@ Method Registrations() As %ListOfObjects
 
 Method GetBizData(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As %DynamicObject
 {
-    Set phdReturn = $Get(ctx.BizInfo.phdReturn)
+    Set info = ctx.GetBizInfo()
+    Set phdReturn = ##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).Read(info, "phdReturn", "")
     Quit ##class(PHA.FACE.TPS.SA.HIS2SA.Data.OPReturn).GetPrescReturnDetail(phdReturn)
 }
 
@@ -58,8 +59,9 @@ Method TestBizPush() As %String
     Set ctx.HospId      = "SC001"
     Set ctx.DeptCode    = "PHA1"
 
-    Set ctx.BizInfo = {}
-    Set ctx.BizInfo.phdReturn = 101   // 退药单号
+    Set info = {}
+    Set info.phdReturn = 101   // 退药单号
+    Do ctx.SetBizInfo(info)
 
     Set entry = ##class(PHA.FACE.TPS.SA.HIS2SA.BusinessEntry.OP.Return).%New()
     Set summary = entry.Execute(ctx)

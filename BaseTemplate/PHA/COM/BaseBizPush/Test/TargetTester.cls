@@ -33,7 +33,7 @@ ClassMethod TestTargetByClass(targetClass As %String, entryCode As %String, hosp
     Set ctx.TriggerCode = entryCode
     Set ctx.HospId = hospId
     Set ctx.DeptCode = deptCode
-    Set ctx.BizInfo = bizInfo
+    Do ctx.SetBizInfo(bizInfo)
     
     // 2. 获取Entry实例以获取业务数据
     Set entryClass = ..ResolveEntryClass(entryCode)
@@ -216,7 +216,7 @@ ClassMethod TestPayloadOnly(targetClass As %String, entryCode As %String, hospId
     Set ctx.TriggerCode = entryCode
     Set ctx.HospId = hospId
     Set ctx.DeptCode = deptCode
-    Set ctx.BizInfo = bizInfo
+    Do ctx.SetBizInfo(bizInfo)
     
     // 获取Entry和业务数据
     Set entryClass = ..ResolveEntryClass(entryCode)

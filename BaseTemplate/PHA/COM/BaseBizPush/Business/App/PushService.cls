@@ -92,7 +92,7 @@ ClassMethod Push(reqObj As %DynamicObject) As %DynamicObject
     s ctx.TriggerCode = reqObj.entryCode
     s ctx.HospId = reqObj.hospId
     s ctx.DeptCode = reqObj.deptId
-    s ctx.BizInfo = reqObj.bizInfo
+    d ctx.SetBizInfo(reqObj.bizInfo)
 
     // =========================
     // 4. 执行业务入口
