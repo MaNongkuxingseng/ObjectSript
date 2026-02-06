@@ -65,7 +65,12 @@ Method Registrations() As %ListOfObjects
 Method GetBizData(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As %DynamicObject
 {
         Set data = {}
-        Set prescNo     = ctx.BizInfo.prescNo
+        // 优先使用 BizInfo 统一约定 data.no，兼容历史字段 prescNo
+        Set info = ctx.GetBizInfo()
+        Set prescNo = ##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).GetNo(info)
+        if prescNo = "" {
+            Set prescNo = ##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).Read(info, "prescNo", "")
+        }
         
         s data = ##class(PHA.FACE.TPS.SA.HIS2SA.Data.Herb).GetPrescData(prescNo)
         Quit data
@@ -78,9 +83,10 @@ ClassMethod TestBizPush()
 	s ctx.TriggerCode = "PHA.FACE.TPS.SA.HIS2SA.BusinessEntry.OP.Herb.Dispen"
 	s ctx.HospId = "SC001"
 	s ctx.DeptCode = "PHA1"
-	s ctx.BizInfo = {}
-	s ctx.BizInfo.dispenseId = "123"
-	s ctx.BizInfo.prescNo = "O251202000004"
+	s info = {}
+	s info.dispenseId = "123"
+	s info.prescNo = "O251202000004"
+	d ctx.SetBizInfo(info)
 	
 	s tpl = ##class(PHA.FACE.TPS.SA.HIS2SA.BusinessEntry.OP.Herb.Dispen).%New()
 	s summary = tpl.Execute(ctx)

@@ -24,7 +24,8 @@ Method IsAsync() As %Boolean
 Method BuildPayload(bizData As %DynamicObject, ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As %Stream.TmpCharacter
 {
 	Set arr = []
-	Set prescNo = ctx.BizInfo.prescNo
+	Set info = ctx.GetBizInfo()
+	Set prescNo = ##class(PHA.COM.BaseBizPush.Engine.Context.PushBizContextDTO).Read(info, "prescNo", "")
 	/// 获取处方的批次发药数据
 	Set bizData = ##class(PHA.FACE.TPS.SA.HIS2SA.Data.Herb).GetPrescBatchData(prescNo)
 	Set dto = ##class(PHA.FACE.TPS.SA.HIS2SA.DTO.DispenseBatchDTO).Build(bizData.data)
