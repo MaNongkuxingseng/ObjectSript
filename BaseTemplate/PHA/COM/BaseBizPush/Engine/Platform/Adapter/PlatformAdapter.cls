@@ -8,6 +8,12 @@ Method Invoke(ctx As PHA.COM.BaseBizPush.Engine.Platform.Context.PlatformInvokeC
 {
 }
 
+/// Adapter 预处理返回结果（默认不处理）
+Method PreprocessResult(ctx As PHA.COM.BaseBizPush.Engine.Platform.Context.PlatformInvokeContext) As %Status
+{
+    quit $$$OK
+}
+
 Method %OnNew() As %Status
 {
     quit $$$OK
