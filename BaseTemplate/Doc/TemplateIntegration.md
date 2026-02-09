@@ -30,10 +30,11 @@ Copyright © 2018 DHC MediWay Technology Co., Ltd. All rights reserved
 2. [整体设计](#2-整体设计)
 3. [流程说明](#3-流程说明)
 4. [核心类与职责](#4-核心类与职责)
-5. [对外接口说明](#5-对外接口说明)
-6. [配置说明](#6-配置说明)
-7. [日志与重推](#7-日志与重推)
-8. [待补充内容](#8-待补充内容)
+5. [工程目录与扩展关系](#5-工程目录与扩展关系)
+6. [对外接口说明](#6-对外接口说明)
+7. [配置说明](#7-配置说明)
+8. [日志与重推](#8-日志与重推)
+9. [待补充内容](#9-待补充内容)
 
 ---
 
@@ -64,7 +65,7 @@ Copyright © 2018 DHC MediWay Technology Co., Ltd. All rights reserved
 
 典型同步推送流程如下：
 
-1. **入口触发**：业务调用 `BasePushTemplate.Execute(ctx)`。
+1. **入口触发**：业务调用 `PHA.COM.BaseBizPush.Business.App.PushService`（业务入口），由其调度模板 `BasePushTemplate.Execute(ctx)`。
 2. **注册匹配**：匹配注册表中的入口与目标集合。
 3. **过滤判定**：执行数据过滤器与自定义过滤方法。
 4. **平台调用**：构造 `PlatformInvokeContext` → Adapter 调用平台 → 预处理返回。
@@ -113,11 +114,37 @@ Copyright © 2018 DHC MediWay Technology Co., Ltd. All rights reserved
 
 ---
 
-## 5. 对外接口说明
+## 5. 工程目录与扩展关系
+
+### 5.1 模板与业务扩展的目录关系
+
+工程内通用模板与业务扩展大体结构如下（以当前仓库为例）：  
+
+- `BaseTemplate/PHA/COM/BaseBizPush`  
+  - 通用推送框架与模板（Template/Target/Platform/Result/Context/Manual 等）。
+- `BaseTemplate/PHA/FACE/TPS/SA/HIS2SA`  
+  - 具体业务落地与平台扩展（Target/Adapter/BusinessEntry 等），基于 COM/BaseBizPush 模板进行实现。
+
+**扩展原则**：  
+- **通用能力下沉到 COM/BaseBizPush**：模板流程、上下文、结果、日志与手工重推能力统一维护。  
+- **业务差异留在 FACE/TPS/SA/HIS2SA**：业务 Target、Adapter、业务入口参数与平台响应解析等扩展在此实现。  
+- **适配器优先**：平台响应差异通过 Adapter 预处理归一，再交给 Template 处理通用流程。  
+
+### 5.2 典型代码关系示例
+
+- `COM/BaseBizPush`：`Template/BasePushTemplate.cls`、`Platform/Adapter/PlatformAdapter.cls`、`Result/PushSummary.cls`  
+- `FACE/TPS/SA/HIS2SA`：`Platforms/Adapter/PUB0005Soap.cls`、`Target/OP/ConsumeTarget.cls`、`BusinessEntry/*`  
+
+---
+
+## 6. 对外接口说明
 
 ### 5.1 执行入口
 
-**接口**：`PHA.COM.BaseBizPush.Engine.Template.BasePushTemplate.Execute(ctx)`  
+**接口**：`PHA.COM.BaseBizPush.Business.App.PushService`（业务入口）  
+**说明**：该入口负责整理业务参数与上下文，调用模板 `BasePushTemplate.Execute(ctx)` 完成推送。  
+
+**模板接口**：`PHA.COM.BaseBizPush.Engine.Template.BasePushTemplate.Execute(ctx)`  
 **入参**：`ctx`（`PushContext`）
 
 | 参数 | 类型 | 说明 |
@@ -137,7 +164,7 @@ Copyright © 2018 DHC MediWay Technology Co., Ltd. All rights reserved
 | successCount/failureCount/totalCount | 统计信息（前端 DTO） |
 | summary | 汇总描述 |
 
-### 5.2 手工重推（ExecuteByDynamic）
+### 6.2 手工重推（ExecuteByDynamic）
 
 **接口**：`PHA.COM.BaseBizPush.Manual.Facade.PushManualFacade.ExecuteByDynamic(reqDyn)`  
 **入参**：`reqDyn`（%DynamicObject）
@@ -150,27 +177,32 @@ Copyright © 2018 DHC MediWay Technology Co., Ltd. All rights reserved
 | bizInfo | 业务主信息（DTO） |
 | targetClasses | 目标类列表 |
 
+**手工重推补充说明**：  
+- **适用场景**：人工选择失败记录或指定目标进行重推。  
+- **入参来源**：建议直接使用推送日志中的 `manualRequest` 字段。  
+- **白名单限制**：`targetClasses` 应仅包含允许重推的目标类（可由日志自动提取）。  
+
 **出参**：同 `Execute` 的响应结构（结果 DTO）。
 
 ---
 
-## 6. 配置说明
+## 7. 配置说明
 
-### 6.1 平台适配器映射
+### 7.1 平台适配器映射
 - 平台适配器类由 `PlatformInvokeContext.getPlatformAdapter()` 解析。
 - 字典维护规则：`PlatformClass_MethodName` → 适配器类名。
 
-### 6.2 目标注册
+### 7.2 目标注册
 - 注册项包含 `TargetClass`、平台类/方法/平台数据（`PlatformData`）。
 - `PlatformData` 建议使用 JSON 结构化字段，确保适配器可读。
 
-### 6.3 日志与重推
+### 7.3 日志与重推
 - 结果日志在 `PushSummary.AddResult` 时写入。
 - 日志中包含 `context` 和 `manualRequest` 用于重推。
 
 ---
 
-## 7. 日志与重推
+## 8. 日志与重推
 
 ### 7.1 日志写入内容（示例）
 - `context`：触发入口、院区/科室、业务主信息/明细、触发模式、白名单。
@@ -182,7 +214,7 @@ Copyright © 2018 DHC MediWay Technology Co., Ltd. All rights reserved
 
 ---
 
-## 8. 待补充内容
+## 9. 待补充内容
 
 以下内容需要进一步补充或确认后补写：
 
@@ -191,4 +223,5 @@ Copyright © 2018 DHC MediWay Technology Co., Ltd. All rights reserved
 - **日志查询界面**（字段含义、筛选条件、重推入口）。
 - **异常场景与重试策略规范**（重试次数/并发控制）。
 - **Target 设计规范模板与字段约束**（按业务类型细化）。
-
+- **PushService 入口的参数明细与校验规则**（需要结合实际业务实现补充）。
+- **Manual 重推前端交互流程与权限控制**（需补充 UI/权限策略）。
