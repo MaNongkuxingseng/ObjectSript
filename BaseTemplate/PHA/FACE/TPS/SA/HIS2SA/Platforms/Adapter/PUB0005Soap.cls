@@ -50,6 +50,33 @@ Method Invoke(ctx As PHA.COM.BaseBizPush.Engine.Platform.Context.PlatformInvokeC
     q sc
 }
 
+/// 统一平台返回格式：resultCode/resultContent/list -> code/message/data
+Method PreprocessResult(ctx As PHA.COM.BaseBizPush.Engine.Platform.Context.PlatformInvokeContext) As %Status
+{
+    if ctx.RawResponse '= "" {
+        set raw = $ZStrip(ctx.RawResponse, "<W")
+        try {
+            set respObj = ##class(%DynamicObject).%FromJSON(raw)
+            if $isobject(respObj) && respObj.%IsDefined("resultCode") {
+                set normalized = {
+                    "code": (respObj.resultCode),
+                    "message": ($get(respObj.resultContent, "")),
+                    "data": ($get(respObj.list, []))
+                }
+                set ctx.Result = normalized
+                set ctx.IsSuccess = (respObj.resultCode = "00")
+                set ctx.RawResponse = normalized.%ToJSON()
+            } else {
+                set ctx.Result = respObj
+            }
+        } catch ex {
+            // 保持原始返回
+        }
+    }
+
+    quit $$$OK
+}
+
 Method GetPlatformInfo() As %String
 {
     quit "SA海典HIS消耗同步"

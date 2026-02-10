@@ -67,13 +67,19 @@ ClassMethod Push(reqObj As %DynamicObject) As %DynamicObject
     // 1. 参数校验
     // =========================
     if reqObj.entryCode = "" {
-        q ..BuildError("entryCode不能为空")
+        s resp = ..BuildError("entryCode不能为空")
+        d ..LogPushResponse(resp)
+        q resp
     }
     if reqObj.hospId = "" {
-        q ..BuildError("hospId不能为空")
+        s resp = ..BuildError("hospId不能为空")
+        d ..LogPushResponse(resp)
+        q resp
     }
     if reqObj.deptId = "" {
-        q ..BuildError("deptCode不能为空")
+        s resp = ..BuildError("deptCode不能为空")
+        d ..LogPushResponse(resp)
+        q resp
     }
 
     // =========================
@@ -82,7 +88,9 @@ ClassMethod Push(reqObj As %DynamicObject) As %DynamicObject
     // ToDo:将入口代码映射修改为公共字典维护(DHC_StkComDictionary)中入口代码与入口类的字典关系。
     s entryClass = ..ResolveEntryClass(reqObj.entryCode)
     if entryClass = "" {
-        q ..BuildError("未找到业务入口[" _ reqObj.entryCode _ "]")
+        s resp = ..BuildError("未找到业务入口[" _ reqObj.entryCode _ "]")
+        d ..LogPushResponse(resp)
+        q resp
     }
 
     // =========================
@@ -103,7 +111,9 @@ ClassMethod Push(reqObj As %DynamicObject) As %DynamicObject
     // =========================
     // 5. 返回结果
     // =========================
-    q summary.ToFrontDTO()
+    s resp = summary.ToFrontDTO()
+    d ..LogPushResponse(resp)
+    q resp
 }
 
 /// ===============================
@@ -151,6 +161,23 @@ ClassMethod BuildError(msg As %String) As %DynamicObject
     s o.message = msg
     s o.results = []
     q o
+}
+
+/// ===============================
+/// Push 返回日志
+/// ===============================
+ClassMethod LogPushResponse(resp As %DynamicObject) As %Status
+{
+    try {
+        s logRowId = ""
+        s payload = $select($isobject(resp):resp.%ToJSON(),1:"")
+        s user = ##class(PHA.COM.Err).GetSessionVal("LOGON.USERID","")
+        do ##class(PHA.FACE.COM.Log).Log(.logRowId, "", "OP", "PHA.COM.BaseBizPush.Business.App.PushService", "Push", , "", user, "")
+        do ##class(PHA.FACE.COM.Log).Log(.logRowId, payload)
+    } catch ex {
+        // 日志失败不影响主流程
+    }
+    q $$$OK
 }
 
 }

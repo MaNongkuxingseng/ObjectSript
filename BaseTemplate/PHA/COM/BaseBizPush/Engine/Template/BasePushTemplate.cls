@@ -52,7 +52,7 @@ Method Execute(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As PHA.COM
 			            set r.ActionCode = ..ActionCode()
 			            set r.ActionName = ..ActionName()
 			            set r.Message = $SYSTEM.Status.GetErrorText(sc)
-			            d summary.AddResult(r)
+			            d summary.AddResult(r, ctx)
 			            continue
 			        }
 	                
@@ -79,14 +79,14 @@ Method Execute(ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext) As PHA.COM
 			        s pctx.PlatformData = treg.PlatformData
                     d ..ExecuteOne(target,pctx, bizData, ctx, summary)
                 } catch ex {
-                    d summary.AddResult(..BuildTargetExceptionResult(ctx, treg, ex))
+                    d summary.AddResult(..BuildTargetExceptionResult(ctx, treg, ex), ctx)
                     continue
                 }
             }
         }
 
         if ('matched) {
-            d summary.AddResult(..BuildNotRegisteredResult(ctx))
+            d summary.AddResult(..BuildNotRegisteredResult(ctx), ctx)
         }
         q summary
 }
@@ -113,7 +113,7 @@ Method CheckFilter(target As PHA.COM.BaseBizPush.Engine.Target.ITarget, bizData 
         if (filter.ShouldFilter(bizData, ctx)) {
             set r.Success = 0
             set r.Message = "数据被过滤器过滤："_filter.GetFilterMessage(bizData, ctx)
-            do summary.AddResult(r)
+            do summary.AddResult(r, ctx)
             return 0  // 被过滤，不执行
         }
     }
@@ -131,14 +131,14 @@ Method CheckFilter(target As PHA.COM.BaseBizPush.Engine.Target.ITarget, bizData 
                 set r.Message = r.Message _ " 附加数据：" _ filterResult.data.%ToJSON()
             }
             
-            do summary.AddResult(r)
+            do summary.AddResult(r, ctx)
             return 0  // 被过滤，不执行
         }
     } else {
         // 过滤结果格式异常，默认不通过
         set r.Success = 0
         set r.Message = "自定义过滤结果格式异常"
-        do summary.AddResult(r)
+        do summary.AddResult(r, ctx)
         return 0
     }
     
@@ -210,7 +210,7 @@ Method ExecuteOne(target As PHA.COM.BaseBizPush.Engine.Target.ITarget, pctx As P
         )
     }
 
-    d summary.AddResult(result)
+    d summary.AddResult(result, ctx)
 }
 
 /// =====================================================
@@ -235,13 +235,23 @@ Method ExecuteSync(target As PHA.COM.BaseBizPush.Engine.Target.ITarget, pctx As 
 
         // ---------- 返回解析 ----------
         // rawResp 可能是 string / stream / object
-        s parsed = target.ParseResponse(pctx.RawResponse)
+        if $isobject(pctx.Result) {
+            s parsed = pctx.Result
+            if pctx.IsSuccess '= "" {
+                s result.Success = pctx.IsSuccess
+            } else {
+                s result.Success = target.IsSuccess(parsed)
+            }
+            s result.Message = pctx.Result.%ToJSON()
+        } else {
+            s parsed = target.ParseResponse(pctx.RawResponse)
 
-        // ---------- 成功判定 ----------
-        s result.Success = target.IsSuccess(parsed)
+            // ---------- 成功判定 ----------
+            s result.Success = target.IsSuccess(parsed)
 
-        // ---------- 结果消息 ----------
-        s result.Message = target.BuildResultMessage(parsed)
+            // ---------- 结果消息 ----------
+            s result.Message = target.BuildResultMessage(parsed)
+        }
     }
     catch ex {
         s result.Success = 0
@@ -312,6 +322,9 @@ Method DoInvoke(target As PHA.COM.BaseBizPush.Engine.Target.ITarget, pctx As PHA
     if adapterClass '= "" {
         s adapter = $classmethod(adapterClass, "%New")
         s sc = adapter.Invoke(pctx)
+        if $$$ISOK(sc) {
+            s sc = adapter.PreprocessResult(pctx)
+        }
         q sc
     }else {
 
@@ -368,7 +381,7 @@ Method ExecuteOneSync(target As PHA.COM.BaseBizPush.Engine.Target.ITarget, platf
             s r.Message = ex.DisplayString()
         }
 
-        d summary.AddResult(r)
+        d summary.AddResult(r, ctx)
 }
 
 

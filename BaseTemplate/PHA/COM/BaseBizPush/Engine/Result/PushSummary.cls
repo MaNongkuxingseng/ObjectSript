@@ -11,13 +11,13 @@ Method %OnNew() As %Status
     q $$$OK
 }
 
-Method AddResult(r As PHA.COM.BaseBizPush.Engine.Result.PushResult)
+Method AddResult(r As PHA.COM.BaseBizPush.Engine.Result.PushResult, ctx As PHA.COM.BaseBizPush.Engine.Context.PushContext = "")
 {
     d ..Results.Insert(r)
 
     // 日志记录放在结果汇总入口，保证所有执行分支（成功/失败/异常）统一落日志
     // 日志失败不阻断主流程
-    set logSc = ##class(PHA.COM.BaseBizPush.Engine.Result.PushResultLogService).Write(r)
+    set logSc = ##class(PHA.COM.BaseBizPush.Engine.Result.PushResultLogService).Write(r, ctx)
 }
 
 Method GetAllResult() As %String

@@ -23,6 +23,9 @@ Property RawResponse;
 /// Adapter 规范化后的返回（可选）
 Property Result;
 
+/// Adapter 预处理的成功标记（可选）
+Property IsSuccess As %Boolean;
+
 /// 获取公共字典定义的平台适配器
 /// SA.PlatformCode中定义了:PlatformClass_MethodName对应的平台适配器类
 Method getPlatformAdapter() As %String
